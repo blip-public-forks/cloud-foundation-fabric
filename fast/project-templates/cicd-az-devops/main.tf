@@ -16,8 +16,10 @@
 
 locals {
   cloud_config = templatefile("cloud-config.yaml", merge(var.agent_config, {
-    image    = "${module.registry.url}/${var.agent_config.image}"
-    location = var.location
+    image      = "${module.registry.url}/${var.agent_config.image}"
+    location   = var.location
+    name       = var.name
+    project_id = var.project_id
   }))
 }
 
@@ -29,6 +31,30 @@ module "registry" {
   format = {
     docker = {
       standard = {}
+    }
+  }
+}
+
+module "secret" {
+  source     = "../../../modules/secret-manager"
+  count      = var.agent_config.azp.token_file == null ? 0 : 1
+  project_id = var.project_id
+  secrets = {
+    (var.name) = {
+      iam = {
+        "roles/secretmanager.secretAccessor" = [
+          "serviceAccount:${var.instance_config.service_account}"
+        ]
+      }
+      versions = {
+        latest = {
+          data = file(var.agent_config.azp.token_file)
+          data_config = {
+            # bump this version when data needs updating
+            write_only_version = 1
+          }
+        }
+      }
     }
   }
 }

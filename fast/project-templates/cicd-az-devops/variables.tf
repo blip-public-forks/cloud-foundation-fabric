@@ -20,9 +20,9 @@ variable "agent_config" {
     agent_name = optional(string, "Test Agent on GCP")
     image      = optional(string, "azp-agent")
     azp = object({
-      instance = string
-      pool     = string
-      token    = string
+      instance   = string
+      pool       = string
+      token_file = optional(string)
     })
   })
 }
